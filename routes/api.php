@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ Route::post('login',[UserController::class,'login'])->name('login');
 Route::middleware('auth:sanctum')->group(function () {
     // posts routes
     Route::apiResource('posts', PostController::class);
+    Route::post('post/image',[ImageController::class,'store']);
     // trashed-restore-forceDelete routes
     Route::get('/trashed',[PostController::class,'showTrashed']);
     Route::post('/restore/{id}',[PostController::class,'restorePost']);
