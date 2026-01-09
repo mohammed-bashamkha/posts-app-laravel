@@ -17,8 +17,6 @@ class ImageController extends Controller
         try
         {
             $request->validate([
-            'title'    => 'nullable|string|max:255',
-            'content'  => 'nullable|string',
             'description' => 'nullable|string|max:500',
             'url'   => 'required|array|min:1',
             'url.*' => 'image|mimes:jpg,png,jpeg|max:2048',
@@ -26,7 +24,6 @@ class ImageController extends Controller
             $post = Post::create([
                 'user_id' => Auth::id(),
                 'type'    => 'image',
-                'title'   => $request->title,
             ]);
 
             foreach ($request->file('url') as $url) 
@@ -36,7 +33,6 @@ class ImageController extends Controller
                 $post->images()->create([
                     'user_id' => Auth::id(),
                     'post_id' => $post->id,
-                    'title'   => $request->title,
                     'url'     => $path,
                     'description' => $request->description,
                 ]);
@@ -44,13 +40,15 @@ class ImageController extends Controller
 
             return response()->json([
                 'message' => 'Image post created successfully',
-                'post' => $post
+                'post' => $post,
+                'images' => $path,
+                'description' => $request->description,
             ], 201);
         }
         catch(Exception $e)
         {
             return response()->json([
-                'message' => 'Failed To Create Post',
+                'message' => 'Failed To Create Image Post',
                 'error' => $e->getMessage()
             ]);
         }
