@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePostRequest;
 use Illuminate\Http\Request;
 use App\Models\Post;
 use Exception;
@@ -32,22 +33,11 @@ class PostController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StorePostRequest $request)
     {
         try
         {
-            $request->validate([
-            'title' => 'required|string',
-            'content' => 'required|string',
-
-            'description' => 'nullable|string|max:500',
-
-            'video_url'   => 'nullable|array|min:1',
-            'video_url.*' => 'mimetypes:video/mp4,video/avi,video/mov|max:40480',
-
-            'image_url'   => 'nullable|array|min:1',
-            'image_url.*' => 'image|mimes:jpg,png,jpeg|max:2048',
-        ]);
+            $request->validated();
             $post = Post::create([
                 'user_id' => Auth::id(),
                 'title' => $request->title,
@@ -59,10 +49,9 @@ class PostController extends Controller
 
                 $imagePath = $this->uploadFile($image, 'posts/images', 'public');
 
-                $images[] = $post->images()->create([
+                $post->images()->create([
                     'user_id'     => Auth::id(),
-                    'image_url'         => $imagePath,
-                    'description' => $request->description,
+                    'image_url'   => $imagePath,
                 ]);
             }
         }
@@ -73,10 +62,9 @@ class PostController extends Controller
 
                 $videoPath = $this->uploadFile($video, 'posts/videos', 'public');
 
-                $videos[] = $post->videos()->create([
+                $post->videos()->create([
                     'user_id'     => Auth::id(),
-                    'video_url'         => $videoPath,
-                    'description' => $request->description,
+                    'video_url'   => $videoPath,
                 ]);
             }
         }
@@ -84,7 +72,6 @@ class PostController extends Controller
             return response()->json([
                 'message' => 'Post created successfully',
                 'post' => $post->load(['images', 'videos']),
-                'description' => $request->description,
             ],201);
         }
         catch(Exception $e)
@@ -180,8 +167,7 @@ class PostController extends Controller
             }
 
             $trashedPosts = Post::where('user_id', $user)->onlyTrashed()->get();
-            // return response()->json($posts, 200);
-            return view('posts.show-trashed',compact('trashedPosts'));
+            return response()->json($trashedPosts, 200);
         }
         catch(Exception $e)
         {
