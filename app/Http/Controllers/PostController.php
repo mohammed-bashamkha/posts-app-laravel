@@ -140,13 +140,13 @@ class PostController extends Controller
         {
             $user = Auth::id();
             $post = Post::findOrFail($id);
+            $post->load(['images', 'videos', 'comments']);
             if($post->user_id !== $user) {
                 return response()->json([
                     'message' => 'Unauthorized'
                 ], 403);
             }
-            // return response()->json($post, 200);
-            return view('posts.show',compact('post'));
+            return response()->json($post, 200);
         }
         catch(Exception $e)
         {
@@ -189,7 +189,24 @@ class PostController extends Controller
                     'message' => 'Unauthorized'
                 ], 403);
             }
+            // restore the post
             $post->restore();
+            // restore related images and videos
+            if (method_exists($post, 'images')) {
+                $post->images()->withTrashed()->get()->each(function ($image) {
+                    if (method_exists($image, 'restore')) {
+                        $image->restore();
+                    }
+                });
+            }
+
+            if (method_exists($post, 'videos')) {
+                $post->videos()->withTrashed()->get()->each(function ($video) {
+                    if (method_exists($video, 'restore')) {
+                        $video->restore();
+                    }
+                });
+            }
             return response()->json(['message' => 'Post Restored Successfully','title' => $post->title],200);
         }
         catch(Exception $e)
